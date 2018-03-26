@@ -5,6 +5,7 @@ import validator from './validator';
 import generatorRows from './formatters/rows/generatorRows';
 
 import workbookXML from './statics/workbook.xml';
+import workbookExplanationXML from './statics/workbookExplanation.xml';
 import workbookXMLRels from './statics/workbook.xml.rels';
 import rels from './statics/rels';
 import contentTypes from './statics/[Content_Types].xml';
@@ -22,13 +23,25 @@ export default (config) => {
 
   const zip = new JSZip();
   const xl = zip.folder('xl');
-  xl.file('workbook.xml', workbookXML);
+  const worksheet1 = generateXMLWorksheet(config.sheets.body);
+  let worksheet2;
+
   xl.file('_rels/workbook.xml.rels', workbookXMLRels);
   zip.file('_rels/.rels', rels);
   zip.file('[Content_Types].xml', contentTypes);
 
-  const worksheet = generateXMLWorksheet(config.sheet.data);
-  xl.file('worksheets/sheet1.xml', worksheet);
+  if (config.sheets.explanation === null) {
+    xl.file('workbook.xml', workbookXML);
+  } else {
+    xl.file('workbook.xml', workbookExplanationXML);
+  }
+
+  xl.file('worksheets/sheet1.xml', worksheet1);
+
+  if (config.sheets.explanation !== null) {
+    worksheet2 = generateXMLWorksheet(config.sheets.explanation);
+    xl.file('worksheets/sheet2.xml', worksheet2);
+  }
 
   return zip.generateAsync({ type: 'blob' })
     .then((blob) => {
